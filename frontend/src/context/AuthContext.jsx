@@ -10,6 +10,31 @@ export function AuthProvider({ children }) {
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
 
   useEffect(() => {
+    // Check for ?demo=admin or ?demo=buyer URL parameters for easy demo inspection
+    const params = new URLSearchParams(window.location.search);
+    const demo = params.get('demo');
+    if (demo && !token) {
+      if (demo === 'admin') {
+        api.login({ email: 'admin@dealership.com', password: 'Admin@Apex2026!' })
+          .then((data) => {
+            setToken(data.access_token);
+            setUser(data.user);
+            setStoredToken(data.access_token);
+            setStoredUser(data.user);
+          })
+          .catch(() => {});
+      } else if (demo === 'buyer') {
+        api.login({ email: 'buyer@dealership.com', password: 'Buyer@Apex2026!' })
+          .then((data) => {
+            setToken(data.access_token);
+            setUser(data.user);
+            setStoredToken(data.access_token);
+            setStoredUser(data.user);
+          })
+          .catch(() => {});
+      }
+    }
+
     const handleUnauthorized = () => {
       setToken(null);
       setUser(null);
@@ -17,7 +42,7 @@ export function AuthProvider({ children }) {
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
-  }, []);
+  }, [token]);
 
   const login = async (email, password) => {
     const data = await api.login({ email, password });
@@ -30,7 +55,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
-    const newUser = await api.register(payload);
+    await api.register(payload);
     // Automatically log in after registration
     const data = await api.login({ email: payload.email, password: payload.password });
     setToken(data.access_token);
